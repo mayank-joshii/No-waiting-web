@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CmsRouteImport } from './routes/cms'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CmsIndexRouteImport } from './routes/cms.index'
+import { Route as CmsLoginRouteImport } from './routes/cms.login'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -29,6 +32,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CmsRoute = CmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -46,14 +54,27 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CmsIndexRoute = CmsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CmsRoute,
+} as any)
+const CmsLoginRoute = CmsLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => CmsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/blog': typeof BlogRoute
+  '/cms': typeof CmsRouteWithChildren
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/cms/login': typeof CmsLoginRoute
+  '/cms/': typeof CmsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,15 +83,20 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/cms/login': typeof CmsLoginRoute
+  '/cms': typeof CmsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/blog': typeof BlogRoute
+  '/cms': typeof CmsRouteWithChildren
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/cms/login': typeof CmsLoginRoute
+  '/cms/': typeof CmsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,25 +104,40 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/blog'
+    | '/cms'
     | '/contact'
     | '/services'
     | '/sitemap.xml'
+    | '/cms/login'
+    | '/cms/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/blog' | '/contact' | '/services' | '/sitemap.xml'
-  id:
-    | '__root__'
+  to:
     | '/'
     | '/about'
     | '/blog'
     | '/contact'
     | '/services'
     | '/sitemap.xml'
+    | '/cms/login'
+    | '/cms'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/blog'
+    | '/cms'
+    | '/contact'
+    | '/services'
+    | '/sitemap.xml'
+    | '/cms/login'
+    | '/cms/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   BlogRoute: typeof BlogRoute
+  CmsRoute: typeof CmsRouteWithChildren
   ContactRoute: typeof ContactRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -125,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cms': {
+      id: '/cms'
+      path: '/cms'
+      fullPath: '/cms'
+      preLoaderRoute: typeof CmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog': {
       id: '/blog'
       path: '/blog'
@@ -146,13 +194,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cms/': {
+      id: '/cms/'
+      path: '/'
+      fullPath: '/cms/'
+      preLoaderRoute: typeof CmsIndexRouteImport
+      parentRoute: typeof CmsRoute
+    }
+    '/cms/login': {
+      id: '/cms/login'
+      path: '/login'
+      fullPath: '/cms/login'
+      preLoaderRoute: typeof CmsLoginRouteImport
+      parentRoute: typeof CmsRoute
+    }
   }
 }
+
+interface CmsRouteChildren {
+  CmsLoginRoute: typeof CmsLoginRoute
+  CmsIndexRoute: typeof CmsIndexRoute
+}
+
+const CmsRouteChildren: CmsRouteChildren = {
+  CmsLoginRoute: CmsLoginRoute,
+  CmsIndexRoute: CmsIndexRoute,
+}
+
+const CmsRouteWithChildren = CmsRoute._addFileChildren(CmsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   BlogRoute: BlogRoute,
+  CmsRoute: CmsRouteWithChildren,
   ContactRoute: ContactRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

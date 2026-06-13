@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -144,15 +145,25 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const isCms = useRouterState({
+    select: (s) => s.location.pathname.startsWith("/cms"),
+  });
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Header />
-      <main className="pt-20">
+      {isCms ? (
         <Outlet />
-      </main>
-      <Footer />
+      ) : (
+        <>
+          <Header />
+          <main className="pt-20">
+            <Outlet />
+          </main>
+          <Footer />
+        </>
+      )}
     </QueryClientProvider>
   );
 }
+
 

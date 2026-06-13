@@ -1,18 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  BarChart3,
-  Bell,
-  CalendarCheck,
-  CheckCircle2,
-  Clock3,
-  Compass,
-  ShoppingBag,
-  Users,
-  Utensils,
-} from "lucide-react";
+import * as Icons from "lucide-react";
 import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
+import { urlFor } from "../lib/sanity";
+import { getPublicServicesList } from "../lib/api/cms.functions";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
@@ -25,76 +16,18 @@ export const Route = createFileRoute("/services")({
     ],
     links: [{ rel: "canonical", href: "/services" }],
   }),
+  loader: async () => {
+    return {
+      servicesList: await getPublicServicesList(),
+    };
+  },
   component: ServicesPage,
 });
 
-type Svc = {
-  icon: typeof Compass;
-  title: string;
-  tagline: string;
-  bullets: string[];
-  useCase: string;
-  image: string;
-};
-
-const SERVICES: Svc[] = [
-  {
-    icon: Compass,
-    title: "Restaurant Discovery",
-    tagline: "Find your next favorite — not just another place to eat.",
-    bullets: ["Curated lists by cuisine, mood and neighborhood", "Personalized recommendations", "Verified ratings and reviews"],
-    useCase: "Date night? Birthday dinner? Quick lunch? Discovery surfaces the right place instantly.",
-    image: "/restaurant_list.jpg",
-  },
-  {
-    icon: Clock3,
-    title: "Live Wait Times",
-    tagline: "Know before you go.",
-    bullets: ["Real-time wait estimates", "Updated by restaurants and predictive models", "Filter by max wait"],
-    useCase: "Skip the restaurants with a 45-minute line and find the great spot 5 minutes away.",
-    image: "/restaurant_detail.jpg",
-  },
-  {
-    icon: Users,
-    title: "Virtual Queue Management",
-    tagline: "Join the line — without standing in it.",
-    bullets: ["Get a token from anywhere", "Track your position in real time", "Smart ‘ready soon' notifications"],
-    useCase: "Add yourself to the queue, walk around, and arrive right as your table opens up.",
-    image: "/order_tracking.jpg",
-  },
-  {
-    icon: CalendarCheck,
-    title: "Table Reservations",
-    tagline: "Book the perfect table in seconds.",
-    bullets: ["Choose date, time, guests, seating", "Special requests supported", "Modify or cancel anytime"],
-    useCase: "Confirm your evening before lunch and forget about it until it's time to eat.",
-    image: "/book_table.jpg",
-  },
-  {
-    icon: Utensils,
-    title: "Pre-Order Food",
-    tagline: "Your meal, ready when you sit down.",
-    bullets: ["Browse the menu in advance", "Customize and split items", "Sync with your reservation"],
-    useCase: "Short on time? Pre-order so your food arrives moments after you do.",
-    image: "/restaurant_detail.jpg",
-  },
-  {
-    icon: ShoppingBag,
-    title: "Takeaway Scheduling",
-    tagline: "Pick up exactly when you need to.",
-    bullets: ["Pick the right pickup window", "Live order tracking", "Skip the counter line"],
-    useCase: "Schedule lunch for 12:35 sharp and walk in for a 30-second pickup.",
-    image: "/takeaway_order.jpg",
-  },
-  {
-    icon: Bell,
-    title: "Real-Time Notifications",
-    tagline: "Always in the loop.",
-    bullets: ["Queue updates", "Reservation reminders", "Order status alerts"],
-    useCase: "Get pinged the moment your table is ready or your food is on the way out.",
-    image: "/order_tracking.jpg",
-  },
-];
+function ServiceIcon({ name, className }: { name: string; className?: string }) {
+  const IconComponent = (Icons as any)[name] || Icons.HelpCircle;
+  return <IconComponent className={className} />;
+}
 
 function PhoneFrame({
   src,
@@ -127,6 +60,8 @@ function PhoneFrame({
 }
 
 function ServicesPage() {
+  const { servicesList } = Route.useLoaderData();
+
   return (
     <>
       <Section className="relative overflow-hidden">
@@ -147,39 +82,42 @@ function ServicesPage() {
 
       <Section className="pt-0">
         <div className="container-x space-y-16">
-          {SERVICES.map((s, i) => (
-            <div
-              key={s.title}
-              className={`grid lg:grid-cols-2 gap-10 items-center ${i % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""}`}
-            >
-              <div className="relative rounded-3xl border border-white/8 bg-gradient-to-br from-white/[0.05] to-transparent p-8 overflow-hidden flex items-center justify-center">
-                <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/15 blur-3xl" />
-                <PhoneFrame src={s.image} alt={`${s.title} preview`} />
-              </div>
+          {servicesList.map((s: any, i: number) => {
+            const imgSrc = s.image ? (urlFor(s.image)?.url() || "") : (s.imagePath || "");
+            return (
+              <div
+                key={s.title}
+                className={`grid lg:grid-cols-2 gap-10 items-center ${i % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""}`}
+              >
+                <div className="relative rounded-3xl border border-white/8 bg-gradient-to-br from-white/[0.05] to-transparent p-8 overflow-hidden flex items-center justify-center">
+                  <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/15 blur-3xl" />
+                  <PhoneFrame src={imgSrc} alt={`${s.title} preview`} />
+                </div>
 
-              <div>
-                <span className="grid place-items-center h-12 w-12 rounded-2xl lime-gradient text-ink">
-                  <s.icon className="h-6 w-6" />
-                </span>
-                <h2 className="mt-5 text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-                  {s.title}
-                </h2>
-                <p className="mt-3 text-lg text-primary/90">{s.tagline}</p>
-                <ul className="mt-5 space-y-2.5">
-                  {s.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2.5 text-sm text-white/85">
-                      <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 rounded-2xl border border-white/8 bg-white/[0.025] p-4 text-sm text-ink-soft">
-                  <span className="text-xs uppercase tracking-widest text-primary font-semibold">Use case</span>
-                  <p className="mt-1.5">{s.useCase}</p>
+                <div>
+                  <span className="grid place-items-center h-12 w-12 rounded-2xl lime-gradient text-ink">
+                    <ServiceIcon name={s.icon} className="h-6 w-6" />
+                  </span>
+                  <h2 className="mt-5 text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+                    {s.title}
+                  </h2>
+                  <p className="mt-3 text-lg text-primary/90">{s.tagline}</p>
+                  <ul className="mt-5 space-y-2.5">
+                    {(s.bullets || []).map((b: string) => (
+                      <li key={b} className="flex items-start gap-2.5 text-sm text-white/85">
+                        <Icons.CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-6 rounded-2xl border border-white/8 bg-white/[0.025] p-4 text-sm text-ink-soft">
+                    <span className="text-xs uppercase tracking-widest text-primary font-semibold">Use case</span>
+                    <p className="mt-1.5">{s.useCase}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Section>
 
@@ -197,7 +135,7 @@ function ServicesPage() {
               </p>
               <div className="mt-7 flex justify-center"><WaitlistForm /></div>
               <Link to="/contact" className="mt-6 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-                Restaurant owner? Partner with us <ArrowRight className="h-4 w-4" />
+                Restaurant owner? Partner with us <Icons.ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

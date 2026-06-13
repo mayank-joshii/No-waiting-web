@@ -19,10 +19,13 @@ import {
   BarChart3,
   ShieldCheck,
 } from "lucide-react";
+import * as Icons from "lucide-react";
 import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
 import appScreens from "../assets/app-screens.asset.json";
 import appBanner from "../assets/app-banner.asset.json";
+import { urlFor } from "../lib/sanity";
+import { getPublicSiteSettings, getPublicServicesList } from "../lib/api/cms.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,25 +46,40 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
+  loader: async () => {
+    const [settings, services] = await Promise.all([
+      getPublicSiteSettings(),
+      getPublicServicesList(),
+    ]);
+    return {
+      settings,
+      services,
+    };
+  },
   component: HomePage,
 });
 
 function HomePage() {
+  const { settings, services } = Route.useLoaderData();
+
   return (
     <>
-      <Hero />
+      <Hero settings={settings} />
       <SocialProof />
-      <Services />
+      <Services services={services} />
       <HowItWorks />
-      <AppShowcase />
+      <AppShowcase settings={settings} />
       <Partners />
       <Waitlist />
     </>
   );
 }
 
+
 /* ---------------- APP SHOWCASE BILLBOARD ---------------- */
-function AppShowcase() {
+function AppShowcase({ settings }: { settings: any }) {
+  const bannerUrl = settings?.showcaseBanner ? (urlFor(settings.showcaseBanner)?.url() || "/hero_banner.jpg") : "/hero_banner.jpg";
+
   return (
     <Section className="relative overflow-hidden py-12 sm:py-16">
       {/* Background glow */}
@@ -75,7 +93,7 @@ function AppShowcase() {
           {/* Glowing image container */}
           <div className="rounded-[2.25rem] overflow-hidden bg-black/40 border border-white/5">
             <img
-              src="/hero_banner.jpg"
+              src={bannerUrl}
               alt="NoWaiting App Features - Real-time wait times, table reservations, pre-order food, and scheduled takeaways"
               className="w-full h-auto select-none object-cover transform scale-100 group-hover:scale-[1.01] transition-transform duration-700 ease-out"
               loading="lazy"
@@ -118,7 +136,15 @@ function PhoneMockup({
   );
 }
 
-function Hero() {
+function Hero({ settings }: { settings: any }) {
+  const title1 = settings?.heroTitleLine1 || "Skip the Queue.";
+  const title2 = settings?.heroTitleLine2 || "Enjoy More.";
+  const desc = settings?.heroDescription || "The smarter way to discover restaurants, check live wait times, reserve tables and enjoy a seamless dining experience — all in one beautiful app.";
+
+  const leftPhoneUrl = settings?.heroImageLeft ? (urlFor(settings.heroImageLeft)?.url() || "/restaurant_list.jpg") : "/restaurant_list.jpg";
+  const centerPhoneUrl = settings?.heroImageCenter ? (urlFor(settings.heroImageCenter)?.url() || "/logo_splash.jpg") : "/logo_splash.jpg";
+  const rightPhoneUrl = settings?.heroImageRight ? (urlFor(settings.heroImageRight)?.url() || "/order_tracking.jpg") : "/order_tracking.jpg";
+
   return (
     <section className="relative overflow-hidden pt-10 pb-24 sm:pt-16 sm:pb-32">
       {/* Backdrops */}
@@ -132,14 +158,12 @@ function Hero() {
           <div className="animate-fade-up order-2 lg:order-1">
             <Eyebrow>🚀 Launching Soon</Eyebrow>
             <h1 className="mt-6 text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.02]">
-              <span className="text-gradient">Skip the Queue.</span>
+              <span className="text-gradient">{title1}</span>
               <br />
-              <span className="text-lime-gradient">Enjoy More.</span>
+              <span className="text-lime-gradient">{title2}</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-ink-soft leading-relaxed">
-              The smarter way to discover restaurants, check live wait times,
-              reserve tables and enjoy a seamless dining experience —
-              all in one beautiful app.
+              {desc}
             </p>
 
             <div className="mt-8">
@@ -192,19 +216,19 @@ function Hero() {
                 <div className="absolute inset-0 flex items-center justify-center animate-float-slow">
                   {/* Left Phone */}
                   <PhoneMockup
-                    src="/restaurant_list.jpg"
+                    src={leftPhoneUrl}
                     alt="NoWaiting Restaurant List Screen"
                     className="absolute left-0 top-[15%] w-[42%] -rotate-6 z-10 hover:z-30 hover:-translate-y-4 hover:rotate-0 hover:scale-105"
                   />
                   {/* Right Phone */}
                   <PhoneMockup
-                    src="/order_tracking.jpg"
+                    src={rightPhoneUrl}
                     alt="NoWaiting Order Tracking Screen"
                     className="absolute right-0 top-[15%] w-[42%] rotate-6 z-10 hover:z-30 hover:-translate-y-4 hover:rotate-0 hover:scale-105"
                   />
                   {/* Center Phone (Front) */}
                   <PhoneMockup
-                    src="/logo_splash.jpg"
+                    src={centerPhoneUrl}
                     alt="NoWaiting App Splash Screen"
                     className="absolute left-[27%] top-[8%] w-[46%] z-20 border-[8px] hover:z-30 hover:-translate-y-4 hover:scale-[1.03] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)]"
                   />
@@ -274,18 +298,14 @@ function SocialProof() {
 }
 
 /* ---------------- SERVICES ---------------- */
-const SERVICES = [
-  { icon: Compass, title: "Restaurant Discovery", desc: "Find the best places near you with curated lists, ratings and cuisines." },
-  { icon: Clock3, title: "Live Wait Times", desc: "See real-time wait times for every restaurant before you head out." },
-  { icon: Users, title: "Virtual Queue", desc: "Join a queue from anywhere. Show up right when your table is ready." },
-  { icon: CalendarCheck, title: "Table Reservations", desc: "Book your perfect table in seconds — date, time, party size, preferences." },
-  { icon: Utensils, title: "Pre-Order Food", desc: "Order ahead so your meal arrives shortly after you sit down." },
-  { icon: ShoppingBag, title: "Takeaway Scheduling", desc: "Schedule pickup at the exact time you need — never wait again." },
-  { icon: Bell, title: "Real-Time Notifications", desc: "Stay in the loop with smart alerts on bookings, queue and orders." },
-  { icon: BarChart3, title: "Smarter Dining", desc: "Personal recommendations that learn from your taste over time." },
-];
+function ServiceIcon({ name, className }: { name: string; className?: string }) {
+  const IconComponent = (Icons as any)[name] || Icons.HelpCircle;
+  return <IconComponent className={className} />;
+}
 
-function Services() {
+function Services({ services }: { services: any[] }) {
+  const displayServices = services && services.length > 0 ? services : [];
+
   return (
     <Section>
       <div className="container-x">
@@ -296,21 +316,24 @@ function Services() {
         />
 
         <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {SERVICES.map((s, i) => (
-            <div
-              key={s.title}
-              className="group relative rounded-3xl border border-white/8 bg-gradient-to-b from-white/[0.04] to-transparent p-6 hover:border-primary/40 transition-colors animate-fade-up"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                   style={{ background: "radial-gradient(400px circle at 50% 0%, rgba(126,211,33,0.10), transparent 60%)" }} />
-              <span className="grid place-items-center h-11 w-11 rounded-2xl border border-primary/30 bg-primary/10 text-primary group-hover:lime-gradient group-hover:text-ink transition-all">
-                <s.icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-5 text-lg font-semibold text-white">{s.title}</h3>
-              <p className="mt-2 text-sm text-ink-soft leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
+          {displayServices.slice(0, 8).map((s: any, i: number) => {
+            const descText = s.tagline || s.desc;
+            return (
+              <div
+                key={s.title}
+                className="group relative rounded-3xl border border-white/8 bg-gradient-to-b from-white/[0.04] to-transparent p-6 hover:border-primary/40 transition-colors animate-fade-up"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                     style={{ background: "radial-gradient(400px circle at 50% 0%, rgba(126,211,33,0.10), transparent 60%)" }} />
+                <span className="grid place-items-center h-11 w-11 rounded-2xl border border-primary/30 bg-primary/10 text-primary group-hover:lime-gradient group-hover:text-ink transition-all">
+                  <ServiceIcon name={s.icon} className="h-5 w-5" />
+                </span>
+                <h3 className="mt-5 text-lg font-semibold text-white">{s.title}</h3>
+                <p className="mt-2 text-sm text-ink-soft leading-relaxed">{descText}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Section>
