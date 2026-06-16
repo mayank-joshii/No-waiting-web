@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
 import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
-import { urlFor } from "../lib/sanity";
 import { getPublicServicesList } from "../lib/api/cms.functions";
 
 export const Route = createFileRoute("/services")({
@@ -83,7 +82,7 @@ function ServicesPage() {
       <Section className="pt-0">
         <div className="container-x space-y-16">
           {servicesList.map((s: any, i: number) => {
-            const imgSrc = s.image ? (urlFor(s.image)?.url() || "") : (s.imagePath || "");
+            const imgSrc = s.imageUrl || s.imagePath || "";
             return (
               <div
                 key={s.title}

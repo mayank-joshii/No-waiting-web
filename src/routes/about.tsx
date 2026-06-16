@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Heart, Rocket, Target, Sparkles, CheckCircle2 } from "lucide-react";
 import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
-import { urlFor } from "../lib/sanity";
 import { getPublicAboutSettings } from "../lib/api/cms.functions";
 
 export const Route = createFileRoute("/about")({
@@ -45,12 +44,12 @@ function AboutPage() {
       </Section>
 
       {/* Illustrative image from Sanity */}
-      {aboutSettings.aboutImage && urlFor(aboutSettings.aboutImage) && (
+      {aboutSettings.aboutImageUrl && (
         <Section className="pt-0 pb-16">
           <div className="container-x">
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 aspect-[16/9] w-full max-w-4xl mx-auto shadow-elev group hover:border-primary/20 transition-colors duration-500">
               <img
-                src={urlFor(aboutSettings.aboutImage)!.url()}
+                src={aboutSettings.aboutImageUrl}
                 alt="Our Story"
                 className="w-full h-full object-cover transform scale-100 group-hover:scale-[1.01] transition-transform duration-700 ease-out"
                 loading="lazy"

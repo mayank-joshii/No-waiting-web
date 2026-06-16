@@ -4,20 +4,33 @@ import { ArrowRight, Search, Mail, X } from "lucide-react";
 import { PortableText } from "@portabletext/react";
 import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
-import { urlFor } from "../lib/sanity";
 import { getPublicBlogPosts } from "../lib/api/cms.functions";
+import { z } from "zod";
+
+const blogSearchSchema = z.object({
+  category: z.string().optional(),
+  q: z.string().optional(),
+});
 
 export const Route = createFileRoute("/blog")({
-  head: () => ({
-    meta: [
-      { title: "Blog — NoWaiting" },
-      { name: "description", content: "Insights on restaurant technology, dining tips, queue management, hospitality and food trends." },
-      { property: "og:title", content: "Blog — NoWaiting" },
-      { property: "og:description", content: "Stories and insights from the NoWaiting team." },
-      { property: "og:url", content: "/blog" },
-    ],
-    links: [{ rel: "canonical", href: "/blog" }],
-  }),
+  validateSearch: (search) => blogSearchSchema.parse(search),
+  head: ({ search }: any) => {
+    const category = search.category || "All";
+    const title = category === "All" ? "Blog — NoWaiting" : `${category} Articles — NoWaiting`;
+    const description = category === "All"
+      ? "Insights on restaurant technology, dining tips, queue management, hospitality and food trends."
+      : `Read our articles and insights about ${category} on the NoWaiting blog.`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: `/blog${category !== "All" ? `?category=${encodeURIComponent(category)}` : ""}` },
+      ],
+      links: [{ rel: "canonical", href: `/blog${category !== "All" ? `?category=${encodeURIComponent(category)}` : ""}` }],
+    };
+  },
   loader: async () => {
     return {
       posts: await getPublicBlogPosts(),
@@ -37,16 +50,28 @@ const CATEGORIES = [
 
 function BlogPage() {
   const { posts } = Route.useLoaderData();
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("All");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
-  // Safely find featured or default to first post
-  const featured = posts.find((p: any) => p.featured) || posts[0];
-  const rest = posts.filter((p: any) => p._id !== featured?._id);
+  const q = search.q || "";
+  const cat = (search.category || "All") as any;
 
-  const filtered = useMemo(() => {
-    return rest.filter((p: any) => {
+  const setQ = (newQ: string) => {
+    navigate({
+      search: (prev) => ({ ...prev, q: newQ || undefined }),
+    });
+  };
+
+  const setCat = (newCat: string) => {
+    navigate({
+      search: (prev) => ({ ...prev, category: newCat === "All" ? undefined : newCat }),
+    });
+  };
+
+  // Filter all posts by category and search query first
+  const processedPosts = useMemo(() => {
+    return posts.filter((p: any) => {
       const matchCat = cat === "All" || p.category === cat;
       const s = q.trim().toLowerCase();
       const matchQ =
@@ -55,7 +80,14 @@ function BlogPage() {
         p.excerpt.toLowerCase().includes(s);
       return matchCat && matchQ;
     });
-  }, [q, cat, rest]);
+  }, [q, cat, posts]);
+
+  // Derive featured and remaining posts from the filtered set
+  const { featured, rest } = useMemo(() => {
+    const feat = processedPosts.find((p: any) => p.featured) || processedPosts[0];
+    const remaining = processedPosts.filter((p: any) => p._id !== feat?._id);
+    return { featured: feat, rest: remaining };
+  }, [processedPosts]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -126,9 +158,9 @@ function BlogPage() {
                 </span>
               </div>
               <div className="relative aspect-[5/4] rounded-2xl overflow-hidden border border-white/10 bg-[#0E0E0E]">
-                {featured.mainImage && urlFor(featured.mainImage) ? (
+                {featured.imageUrl ? (
                   <img
-                    src={urlFor(featured.mainImage)!.url()}
+                    src={featured.imageUrl}
                     alt={featured.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -168,16 +200,16 @@ function BlogPage() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((p: any) => (
+            {rest.map((p: any) => (
               <div
                 key={p._id || p.title}
                 onClick={() => setSelectedPost(p)}
                 className="group rounded-3xl border border-white/8 bg-gradient-to-br from-white/[0.04] to-transparent p-6 hover:border-primary/40 transition-colors cursor-pointer flex flex-col"
               >
                 <div className="aspect-[16/10] rounded-2xl bg-[#0E0E0E] border border-white/8 mb-5 relative overflow-hidden">
-                  {p.mainImage && urlFor(p.mainImage) ? (
+                  {p.imageUrl ? (
                     <img
-                      src={urlFor(p.mainImage)!.url()}
+                      src={p.imageUrl}
                       alt={p.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -205,7 +237,7 @@ function BlogPage() {
                 </div>
               </div>
             ))}
-            {filtered.length === 0 && (
+            {processedPosts.length === 0 && (
               <div className="col-span-full text-center text-ink-soft py-10">
                 No articles match your search yet.
               </div>

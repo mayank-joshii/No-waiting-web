@@ -24,7 +24,6 @@ import { Eyebrow, SectionHeading, Section } from "../components/site/Section";
 import { WaitlistForm } from "../components/site/WaitlistForm";
 import appScreens from "../assets/app-screens.asset.json";
 import appBanner from "../assets/app-banner.asset.json";
-import { urlFor } from "../lib/sanity";
 import { getPublicSiteSettings, getPublicServicesList } from "../lib/api/cms.functions";
 
 export const Route = createFileRoute("/")({
@@ -78,7 +77,7 @@ function HomePage() {
 
 /* ---------------- APP SHOWCASE BILLBOARD ---------------- */
 function AppShowcase({ settings }: { settings: any }) {
-  const bannerUrl = settings?.showcaseBanner ? (urlFor(settings.showcaseBanner)?.url() || "/hero_banner.jpg") : "/hero_banner.jpg";
+  const bannerUrl = settings?.showcaseBannerUrl || "/hero_banner.jpg";
 
   return (
     <Section className="relative overflow-hidden py-12 sm:py-16">
@@ -141,9 +140,9 @@ function Hero({ settings }: { settings: any }) {
   const title2 = settings?.heroTitleLine2 || "Enjoy More.";
   const desc = settings?.heroDescription || "The smarter way to discover restaurants, check live wait times, reserve tables and enjoy a seamless dining experience — all in one beautiful app.";
 
-  const leftPhoneUrl = settings?.heroImageLeft ? (urlFor(settings.heroImageLeft)?.url() || "/restaurant_list.jpg") : "/restaurant_list.jpg";
-  const centerPhoneUrl = settings?.heroImageCenter ? (urlFor(settings.heroImageCenter)?.url() || "/logo_splash.jpg") : "/logo_splash.jpg";
-  const rightPhoneUrl = settings?.heroImageRight ? (urlFor(settings.heroImageRight)?.url() || "/order_tracking.jpg") : "/order_tracking.jpg";
+  const leftPhoneUrl = settings?.heroImageLeftUrl || "/restaurant_list.jpg";
+  const centerPhoneUrl = settings?.heroImageCenterUrl || "/logo_splash.jpg";
+  const rightPhoneUrl = settings?.heroImageRightUrl || "/order_tracking.jpg";
 
   return (
     <section className="relative overflow-hidden pt-10 pb-24 sm:pt-16 sm:pb-32">

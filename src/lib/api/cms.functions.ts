@@ -6,7 +6,8 @@ import {
   DEFAULT_POSTS,
   DEFAULT_SETTINGS,
   DEFAULT_ABOUT_SETTINGS,
-  DEFAULT_SERVICES
+  DEFAULT_SERVICES,
+  urlFor
 } from "../sanity";
 import {
   addLocalWaitlist,
@@ -571,7 +572,12 @@ export const getPublicBlogPosts = createServerFn({ method: "GET" })
           content
         }`;
         const posts = await sanityReadClient.fetch(query);
-        return posts.length > 0 ? posts : DEFAULT_POSTS;
+        return posts.length > 0
+          ? posts.map((p: any) => ({
+              ...p,
+              imageUrl: p.mainImage ? urlFor(p.mainImage)?.url() : null
+            }))
+          : DEFAULT_POSTS;
       } catch (error) {
         console.error("Error fetching blog posts from Sanity:", error);
         return DEFAULT_POSTS;
@@ -597,7 +603,17 @@ export const getPublicSiteSettings = createServerFn({ method: "GET" })
           showcaseBanner
         }`;
         const settings = await sanityReadClient.fetch(query);
-        return settings ? { ...DEFAULT_SETTINGS, ...settings } : DEFAULT_SETTINGS;
+        if (settings) {
+          return {
+            ...DEFAULT_SETTINGS,
+            ...settings,
+            heroImageLeftUrl: settings.heroImageLeft ? urlFor(settings.heroImageLeft)?.url() : null,
+            heroImageCenterUrl: settings.heroImageCenter ? urlFor(settings.heroImageCenter)?.url() : null,
+            heroImageRightUrl: settings.heroImageRight ? urlFor(settings.heroImageRight)?.url() : null,
+            showcaseBannerUrl: settings.showcaseBanner ? urlFor(settings.showcaseBanner)?.url() : null,
+          };
+        }
+        return DEFAULT_SETTINGS;
       } catch (error) {
         console.error("Error fetching site settings from Sanity:", error);
         return DEFAULT_SETTINGS;
@@ -633,7 +649,14 @@ export const getPublicAboutSettings = createServerFn({ method: "GET" })
           aboutImage
         }`;
         const aboutSettings = await sanityReadClient.fetch(query);
-        return aboutSettings ? { ...DEFAULT_ABOUT_SETTINGS, ...aboutSettings } : DEFAULT_ABOUT_SETTINGS;
+        if (aboutSettings) {
+          return {
+            ...DEFAULT_ABOUT_SETTINGS,
+            ...aboutSettings,
+            aboutImageUrl: aboutSettings.aboutImage ? urlFor(aboutSettings.aboutImage)?.url() : null,
+          };
+        }
+        return DEFAULT_ABOUT_SETTINGS;
       } catch (error) {
         console.error("Error fetching about page settings from Sanity:", error);
         return DEFAULT_ABOUT_SETTINGS;
@@ -660,7 +683,12 @@ export const getPublicServicesList = createServerFn({ method: "GET" })
           order
         }`;
         const services = await sanityReadClient.fetch(query);
-        return services.length > 0 ? services : DEFAULT_SERVICES;
+        return services.length > 0
+          ? services.map((s: any) => ({
+              ...s,
+              imageUrl: s.image ? urlFor(s.image)?.url() : null,
+            }))
+          : DEFAULT_SERVICES;
       } catch (error) {
         console.error("Error fetching services list from Sanity:", error);
         return DEFAULT_SERVICES;

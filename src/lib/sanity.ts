@@ -189,8 +189,10 @@ export const sanityReadClient = isSanityConfigured
     })
   : null;
 
+const isWriteTokenConfigured = !!writeToken && writeToken !== "your_sanity_write_token";
+
 // Client for writing (server-side only, requires writeToken)
-export const sanityWriteClient = isSanityConfigured && writeToken
+export const sanityWriteClient = isSanityConfigured && isWriteTokenConfigured
   ? createClient({
       projectId,
       dataset,
